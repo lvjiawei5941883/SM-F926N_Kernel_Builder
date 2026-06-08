@@ -217,8 +217,7 @@ jobs:
           KSU_VERSION=$(cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
           echo "UPLOADNAME=-KernelSU_$KSU_VERSION" >> $GITHUB_ENV
         fi  
-
-    - name: Patch ReSukiSU execveat + faccessat + stat hooks
+    - name: Patch ReSukiSU manual hooks (execveat+faccessat+stat+ret)
       if: env.KSU_VARIANT == 'resukisu'
       run: |
           cd kernel_workspace/android-kernel
@@ -252,7 +251,7 @@ jobs:
               with open(open_path, 'w') as f: f.write(oc)
               print('fs/open.c patched (faccessat)')
 
-          # === fs/stat.c: ksu_handle_stat ===
+          # === fs/stat.c: ksu_handle_stat + newfstat_ret + fstat64_ret ===
           stat_path = f'{root}/fs/stat.c'
           with open(stat_path, 'r') as f:
               sc = f.read()
@@ -265,9 +264,24 @@ jobs:
               if 'SYSCALL_DEFINE4(fstatat64,' in sc:
                   cf64 = 'SYSCALL_DEFINE4(fstatat64, int, dfd, const char __user *, filename,\n\t\tstruct stat64 __user *, statbuf, int, flag)\n{'
                   sc = sc.replace(cf64, cf64 + '\n' + hook_st, 1)
-              with open(stat_path, 'w') as f: f.write(sc)
               print('fs/stat.c patched (stat)')
+          # newfstat_ret
+          if 'ksu_handle_newfstat_ret' not in sc:
+              nf = 'SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct stat __user *, statbuf)\n{'
+              hook_nf = '#ifdef CONFIG_KSU_MANUAL_HOOK\n\tksu_handle_newfstat_ret(&fd, &statbuf);\n#endif\n'
+              sc = sc.replace(nf, nf + '\n' + hook_nf, 1)
+              print('fs/stat.c patched (newfstat_ret)')
+          # fstat64_ret (if exists)
+          if 'SYSCALL_DEFINE2(fstat64,' in sc and 'ksu_handle_fstat64_ret' not in sc:
+              f64 = 'SYSCALL_DEFINE2(fstat64, unsigned long, fd, struct stat64 __user *, statbuf)\n{'
+              hook_f64 = '#ifdef CONFIG_KSU_MANUAL_HOOK\n\tksu_handle_fstat64_ret(&fd, &statbuf);\n#endif\n'
+              sc = sc.replace(f64, f64 + '\n' + hook_f64, 1)
+              print('fs/stat.c patched (fstat64_ret)')
+          with open(stat_path, 'w') as f: f.write(sc)
           "
+
+
+
 
     - name: Setup Configuration for Kernel
       run: |
