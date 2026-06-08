@@ -217,11 +217,11 @@ jobs:
           KSU_VERSION=$(cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
           echo "UPLOADNAME=-KernelSU_$KSU_VERSION" >> $GITHUB_ENV
         fi  
-        - name: Patch ReSukiSU manual hooks (all)
-        if: env.KSU_VARIANT == 'resukisu'
-        run: |
+    - name: Patch ReSukiSU manual hooks (all)
+      if: env.KSU_VARIANT == 'resukisu'
+      run: |
           cd kernel_workspace/android-kernel
-          python -c "
+          cat > patch_manual_hooks.py << 'EOF'
           import re, os
           root = os.getcwd()
 
@@ -289,8 +289,9 @@ jobs:
               rc = rc.replace(mark_rb, mark_rb + '\n' + hook_rb, 1)
               with open(reboot_path, 'w') as f: f.write(rc)
               print('kernel/reboot.c patched (sys_reboot)')
-          "
-  
+          EOF
+          python patch_manual_hooks.py
+
 
     - name: Setup Configuration for Kernel
       run: |
