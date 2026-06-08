@@ -219,13 +219,14 @@ jobs:
         fi  
     - name: Patch ReSukiSU execveat + faccessat hooks
       if: env.KSU_VARIANT == 'resukisu'
-      shell: python
       run: |
+          cd kernel_workspace/android-kernel
+          python -c "
           import re, os
           root = os.getcwd()
 
           # === fs/exec.c: ksu_handle_execveat ===
-          exec_path = f"{root}/fs/exec.c"
+          exec_path = f'{root}/fs/exec.c'
           with open(exec_path, 'r') as f:
               content = f.read()
 
@@ -242,7 +243,7 @@ jobs:
               print('fs/exec.c patched (execveat)')
 
           # === fs/open.c: ksu_handle_faccessat ===
-          open_path = f"{root}/fs/open.c"
+          open_path = f'{root}/fs/open.c'
           with open(open_path, 'r') as f:
               oc = f.read()
 
@@ -257,6 +258,8 @@ jobs:
               with open(open_path, 'w') as f:
                   f.write(oc)
               print('fs/open.c patched (faccessat)')
+          "
+
 
     - name: Setup Configuration for Kernel
       run: |
