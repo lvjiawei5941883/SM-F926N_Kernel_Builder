@@ -216,7 +216,8 @@ jobs:
           curl -LSs "https://raw.githubusercontent.com/lanlinga/KernelSU_nogki/main/kernel/setup.sh" | bash -s ${{ env.KERNELSU_TAG }}
           KSU_VERSION=$(cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
           echo "UPLOADNAME=-KernelSU_$KSU_VERSION" >> $GITHUB_ENV
-        fi  
+        fi 
+
     - name: Patch ReSukiSU manual hooks (all)
       if: env.KSU_VARIANT == 'resukisu'
       run: |
@@ -266,13 +267,19 @@ jobs:
                   sc = sc.replace(cf64, cf64 + '\n' + hook_st, 1)
               print('fs/stat.c patched (stat)')
           if 'ksu_handle_newfstat_ret' not in sc:
+              if 'extern int ksu_handle_newfstat_ret' not in sc:
+                  decl_nfr = '#ifdef CONFIG_KSU_MANUAL_HOOK\nextern int ksu_handle_newfstat_ret(int *fd, struct stat __user **statbuf);\n#endif\n'
+                  sc = sc.replace('SYSCALL_DEFINE2(newfstat,', decl_nfr + '\nSYSCALL_DEFINE2(newfstat,', 1)
               nf = 'SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct stat __user *, statbuf)\n{'
-              hook_nf = '#ifdef CONFIG_KSU_MANUAL_HOOK\n\tksu_handle_newfstat_ret(&fd, &statbuf);\n#endif\n'
+              hook_nf = '#ifdef CONFIG_KSU_MANUAL_HOOK\n\tksu_handle_newfstat_ret((int *)&fd, &statbuf);\n#endif\n'
               sc = sc.replace(nf, nf + '\n' + hook_nf, 1)
               print('fs/stat.c patched (newfstat_ret)')
           if 'SYSCALL_DEFINE2(fstat64,' in sc and 'ksu_handle_fstat64_ret' not in sc:
+              if 'extern int ksu_handle_fstat64_ret' not in sc:
+                  decl_f64r = '#ifdef CONFIG_KSU_MANUAL_HOOK\nextern int ksu_handle_fstat64_ret(int *fd, void __user **statbuf);\n#endif\n'
+                  sc = sc.replace('SYSCALL_DEFINE2(fstat64,', decl_f64r + '\nSYSCALL_DEFINE2(fstat64,', 1)
               f64 = 'SYSCALL_DEFINE2(fstat64, unsigned long, fd, struct stat64 __user *, statbuf)\n{'
-              hook_f64 = '#ifdef CONFIG_KSU_MANUAL_HOOK\n\tksu_handle_fstat64_ret(&fd, &statbuf);\n#endif\n'
+              hook_f64 = '#ifdef CONFIG_KSU_MANUAL_HOOK\n\tksu_handle_fstat64_ret((int *)&fd, (void **)&statbuf);\n#endif\n'
               sc = sc.replace(f64, f64 + '\n' + hook_f64, 1)
               print('fs/stat.c patched (fstat64_ret)')
           with open(stat_path, 'w') as f: f.write(sc)
