@@ -55,6 +55,9 @@ jobs:
             SOURCE_BOOT_IMAGE
             KSU_EXPECTED_SIZE
             KSU_EXPECTED_HASH
+            KSU_VARIANT
+            KSU_EXPECTED_SIZE
+            KSU_EXPECTED_HASH
             REMOVE_UNUSED_PACKAGES
         )
 
@@ -203,12 +206,17 @@ jobs:
         fi
 
     - name: Setup KernelSU
-      if: env.ENABLE_KERNELSU == 'true'
       run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        curl -LSs "https://raw.githubusercontent.com/lanlinga/KernelSU_nogki/main/kernel/setup.sh" | bash -s ${{ env.KERNELSU_TAG }}
-        KSU_VERSION=$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
-        echo "UPLOADNAME=-KernelSU_$KSU_VERSION" >> $GITHUB_ENV
+        cd $GITHUB_WORKSPACE/kernel_workspace
+        if [ "${{ env.KSU_VARIANT }}" = "resukisu" ]; then
+          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
+          KSU_VERSION=$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
+          echo "UPLOADNAME=-ReSukiSU_$KSU_VERSION" >> $GITHUB_ENV
+        else
+          curl -LSs "https://raw.githubusercontent.com/lanlinga/KernelSU_nogki/main/kernel/setup.sh" | bash -s ${{ env.KERNELSU_TAG }}
+          KSU_VERSION=$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
+          echo "UPLOADNAME=-KernelSU_$KSU_VERSION" >> $GITHUB_ENV
+        fi
 
     - name: Setup Configuration for Kernel
       run: |
@@ -221,6 +229,10 @@ jobs:
             else
                 echo "CONFIG_KSU=y" >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
             fi
+        fi
+                if [ "${{ env.KSU_VARIANT }}" = "resukisu" ]; then
+            echo "CONFIG_KSU=y" >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+            echo "CONFIG_KSU_MANUAL_HOOK=y" >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
         fi
         if [ ${{ env.ADD_KPROBES_CONFIG }} = true -a ${{ env.APPLY_KSU_PATCH }} != true ]; then
             echo "CONFIG_MODULES=y" >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
