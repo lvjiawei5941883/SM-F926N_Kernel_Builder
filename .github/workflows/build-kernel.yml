@@ -217,7 +217,8 @@ jobs:
           KSU_VERSION=$(cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
           echo "UPLOADNAME=-KernelSU_$KSU_VERSION" >> $GITHUB_ENV
         fi  
-    - name: Patch ReSukiSU execveat + faccessat hooks
+
+    - name: Patch ReSukiSU execveat + faccessat + stat hooks
       if: env.KSU_VARIANT == 'resukisu'
       run: |
           cd kernel_workspace/android-kernel
@@ -229,37 +230,44 @@ jobs:
           exec_path = f'{root}/fs/exec.c'
           with open(exec_path, 'r') as f:
               content = f.read()
-
           if 'ksu_handle_execveat' not in content:
               decl = '#ifdef CONFIG_KSU_MANUAL_HOOK\n__attribute__((hot))\nextern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv, void *envp, int *flags);\n#endif\n'
               content = content.replace('int do_execve(struct filename', decl + 'int do_execve(struct filename', 1)
-
               old = 'return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);'
               new = '#ifdef CONFIG_KSU_MANUAL_HOOK\n\tksu_handle_execveat((int *)AT_FDCWD, &filename, &argv, &envp, 0);\n#endif\n\t' + old
               content = content.replace(old, new, 1)
-
-              with open(exec_path, 'w') as f:
-                  f.write(content)
+              with open(exec_path, 'w') as f: f.write(content)
               print('fs/exec.c patched (execveat)')
 
           # === fs/open.c: ksu_handle_faccessat ===
           open_path = f'{root}/fs/open.c'
           with open(open_path, 'r') as f:
               oc = f.read()
-
           if 'ksu_handle_faccessat' not in oc:
               decl_fa = '#ifdef CONFIG_KSU_MANUAL_HOOK\n__attribute__((hot))\nextern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode, int *flags);\n#endif\n'
               oc = oc.replace('SYSCALL_DEFINE3(faccessat,', decl_fa + '\nSYSCALL_DEFINE3(faccessat,', 1)
-
               call_fa = '#ifdef CONFIG_KSU_MANUAL_HOOK\n\tksu_handle_faccessat(&dfd, &filename, &mode, NULL);\n#endif\n'
               mark = 'SYSCALL_DEFINE3(faccessat, int, dfd, const char __user *, filename, int, mode)\n{'
               oc = oc.replace(mark, mark + '\n' + call_fa, 1)
-
-              with open(open_path, 'w') as f:
-                  f.write(oc)
+              with open(open_path, 'w') as f: f.write(oc)
               print('fs/open.c patched (faccessat)')
-          "
 
+          # === fs/stat.c: ksu_handle_stat ===
+          stat_path = f'{root}/fs/stat.c'
+          with open(stat_path, 'r') as f:
+              sc = f.read()
+          if 'ksu_handle_stat' not in sc:
+              decl_st = '#ifdef CONFIG_KSU_MANUAL_HOOK\n__attribute__((hot))\nextern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);\n#endif\n'
+              sc = sc.replace('SYSCALL_DEFINE4(newfstatat,', decl_st + '\nSYSCALL_DEFINE4(newfstatat,', 1)
+              cnfa = 'SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,\n\t\tstruct stat __user *, statbuf, int, flag)\n{'
+              hook_st = '#ifdef CONFIG_KSU_MANUAL_HOOK\n\tksu_handle_stat(&dfd, &filename, &flag);\n#endif\n'
+              sc = sc.replace(cnfa, cnfa + '\n' + hook_st, 1)
+              if 'SYSCALL_DEFINE4(fstatat64,' in sc:
+                  cf64 = 'SYSCALL_DEFINE4(fstatat64, int, dfd, const char __user *, filename,\n\t\tstruct stat64 __user *, statbuf, int, flag)\n{'
+                  sc = sc.replace(cf64, cf64 + '\n' + hook_st, 1)
+              with open(stat_path, 'w') as f: f.write(sc)
+              print('fs/stat.c patched (stat)')
+          "
 
     - name: Setup Configuration for Kernel
       run: |
