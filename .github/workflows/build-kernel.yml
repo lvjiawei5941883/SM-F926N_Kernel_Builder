@@ -207,14 +207,14 @@ jobs:
 
     - name: Setup KernelSU
       run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         if [ "${{ env.KSU_VARIANT }}" = "resukisu" ]; then
           curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
-          KSU_VERSION=$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
+          KSU_VERSION=$(cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
           echo "UPLOADNAME=-ReSukiSU_$KSU_VERSION" >> $GITHUB_ENV
         else
           curl -LSs "https://raw.githubusercontent.com/lanlinga/KernelSU_nogki/main/kernel/setup.sh" | bash -s ${{ env.KERNELSU_TAG }}
-          KSU_VERSION=$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
+          KSU_VERSION=$(cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
           echo "UPLOADNAME=-KernelSU_$KSU_VERSION" >> $GITHUB_ENV
         fi
 
