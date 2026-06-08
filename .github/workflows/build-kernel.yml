@@ -182,7 +182,7 @@ jobs:
     - name: Download kernel source
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        wget -O kernel.zip "https://github.com/lvjiawei5941883/KernelSU_Action/releases/download/1.0/SM-F926N_KOR_15_Opensource.zip"
+        wget -O kernel.zip "https://github.com/lvjiawei5941883/SM-F926N_Kernel_Builder/releases/download/kernel-source/SM-F926N_KOR_15_Opensource.zip"
         unzip -q kernel.zip
         mkdir -p android-kernel
         tar -xzf Kernel.tar.gz -C android-kernel/
