@@ -27,3 +27,21 @@ AnyKernel3 zip 通过 TWRP / OrangeFox 或 Kernel Flasher App 刷入。
 - [KernelSU](https://github.com/tiann/KernelSU)
 - [ReSukiSU](https://github.com/ReSukiSU/ReSukiSU)
 - [lanlinga/KernelSU_Action](https://github.com/lanlinga/KernelSU_Action)
+
+## ⚠️ 重要说明
+
+**此仓库为实验性项目，尚未在真实设备上测试通过。**
+- 内核编译成功，但刷入后可能无法开机（震动发热，kernel panic）
+- 问题可能出在 dtb overlay 不完整、defconfig 不匹配或三星 RKP 保护
+- 目前仍在调试中，请勿用于生产设备
+- 如果你有 SM-F926N 设备并愿意测试，欢迎提供反馈
+
+**已知问题**：
+1. 编译成功但不开机（震动发热）
+2. DTC_EXT 路径问题（三星定制 dtc 缺失）
+3. defconfig 差异（kor_singlex vs eur_openx）
+
+**后续计划**：
+- 对比 Glide Kernel 的 defconfig
+- 修复 dtb overlay
+- 测试 APatch/FolkPatch 替代方案
