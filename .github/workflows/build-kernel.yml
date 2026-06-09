@@ -346,12 +346,6 @@ jobs:
     - name: Build kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        if [ ! -d tools/dtc ]; then
-            git clone --depth=1 --filter=blob:none --sparse https://github.com/himekifee/glide-kernel-F926 -b CVIG /tmp/glide-temp
-            cd /tmp/glide-temp && git sparse-checkout set tools/dtc && cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-            cp -r /tmp/glide-temp/tools/dtc tools/
-            rm -rf /tmp/glide-temp
-        fi
         export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$PATH
         export KBUILD_BUILD_HOST=Github-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
