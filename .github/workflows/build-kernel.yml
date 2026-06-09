@@ -343,6 +343,20 @@ jobs:
         key: build-kernel-${{ env.DEVICE }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}
         max-size: 2G
 
+    - name: Debug - check tools directory
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        echo "=== tools/ root ==="
+        ls -la tools/ 2>/dev/null || echo 'tools/ not found'
+        echo "=== tools/dtc (if exists) ==="
+        ls -la tools/dtc* 2>/dev/null || echo 'tools/dtc* not found'
+        echo "=== scripts/dtc ==="
+        ls -la scripts/dtc/ 2>/dev/null || echo 'scripts/dtc/ not found'
+        echo "=== find dtc binary ==="
+        find . -maxdepth 4 -name "dtc" -type f 2>/dev/null || echo "no dtc binary found"
+        which dtc 2>/dev/null || echo 'system dtc not in PATH'
+        dpkg -l | grep device-tree 2>/dev/null || true
+
     - name: Build kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
