@@ -211,6 +211,9 @@ jobs:
           curl -fsSL -o tools/dtc https://raw.githubusercontent.com/lvjiawei5941883/SM-F926N_Kernel_Builder/main/tools/dtc
           chmod +x tools/dtc
           ls -la tools/dtc
+          curl -fsSL -o tools/dtc https://raw.githubusercontent.com/lvjiawei5941883/SM-F926N_Kernel_Builder/main/tools/dtc
+          chmod +x tools/dtc
+          ls -la tools/dtc
         if [ "${{ env.KSU_VARIANT }}" = "resukisu" ]; then
           curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
           KSU_VERSION=$(cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
