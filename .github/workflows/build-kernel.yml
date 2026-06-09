@@ -343,15 +343,6 @@ jobs:
         key: build-kernel-${{ env.DEVICE }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}
         max-size: 2G
 
-    - name: Download Samsung DTC from Glide Kernel
-      run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        mkdir -p tools
-        wget -q -O tools/dtc https://raw.githubusercontent.com/himekifee/glide-kernel-F926/CVIG/tools/dtc
-        chmod +x tools/dtc
-        file tools/dtc
-        ls -la tools/dtc
-
     - name: Build kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
