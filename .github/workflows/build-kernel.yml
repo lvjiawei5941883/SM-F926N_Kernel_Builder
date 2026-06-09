@@ -359,10 +359,8 @@ jobs:
         else
             make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} Image dtbs
         fi
-        # Combine Image + dtb -> Image.gz-dtb
-        cat out/arch/arm64/boot/Image out/arch/arm64/boot/dts/vendor/qcom/*.dtb > out/arch/arm64/boot/Image-dtb
-        gzip -9 -f out/arch/arm64/boot/Image-dtb
-        mv out/arch/arm64/boot/Image-dtb.gz out/arch/arm64/boot/Image.gz-dtb
+        gzip -9 out/arch/arm64/boot/Image
+        cat out/arch/arm64/boot/dts/vendor/qcom/lahaina*.dtb > out/arch/arm64/boot/dtb
 
 
     - name: Check a kernel output files
@@ -392,6 +390,7 @@ jobs:
         sed -i 's!BLOCK=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;!BLOCK=auto;!g' AnyKernel3/anykernel.sh
         sed -i 's/IS_SLOT_DEVICE=0;/is_slot_device=auto;/g' AnyKernel3/anykernel.sh
         cp android-kernel/out/arch/${{ env.ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }} AnyKernel3/
+        cp android-kernel/out/arch/${{ env.ARCH }}/boot/dtb AnyKernel3/
         if [ ${{ env.CHECK_DTBO_IS_OK }} = true ]; then
             cp android-kernel/out/arch/${{ env.ARCH }}/boot/dtbo.img AnyKernel3/
         fi
@@ -415,6 +414,7 @@ jobs:
             unzip AnyKernel3.zip -d AnyKernel3/
         fi
         cp android-kernel/out/arch/${{ env.ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }} AnyKernel3/
+        cp android-kernel/out/arch/${{ env.ARCH }}/boot/dtb AnyKernel3/
         if [ ${{ env.CHECK_DTBO_IS_OK }} = true ]; then
             cp android-kernel/out/arch/${{ env.ARCH }}/boot/dtbo.img AnyKernel3/
         fi
