@@ -352,6 +352,7 @@ jobs:
     - name: Setup Glide dtc
       run: |
         git clone --depth=1 https://github.com/himekifee/glide-kernel-F926.git /tmp/glide
+        mkdir -p $GITHUB_WORKSPACE/kernel_workspace/android-kernel/tools/dtc/
         cp -r /tmp/glide/tools/dtc/* $GITHUB_WORKSPACE/kernel_workspace/android-kernel/tools/dtc/
 
     - name: Build kernel
