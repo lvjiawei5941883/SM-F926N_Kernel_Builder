@@ -1,5 +1,7 @@
 # SM-F926N Kernel Builder
 
+> ⚠️ **警告**：本项目编译产物未经过实机测试，可能无法正常开机或导致设备异常。请谨慎使用，刷机前务必备份重要数据，自行承担风险。
+
 三星 Galaxy Z Fold 3 (SM-F926N) 内核编译仓库，基于 [lanlinga/KernelSU_Action](https://github.com/lanlinga/KernelSU_Action) 框架。
 
 ## 特性
