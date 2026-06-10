@@ -53,8 +53,6 @@ jobs:
             NEED_DTBO
             BUILD_BOOT_IMG
             SOURCE_BOOT_IMAGE
-            KSU_EXPECTED_SIZE
-            KSU_EXPECTED_HASH
             KSU_VARIANT
             KSU_EXPECTED_SIZE
             KSU_EXPECTED_HASH
@@ -73,7 +71,7 @@ jobs:
       if: env.REMOVE_UNUSED_PACKAGES == 'true'
       uses: jlumbroso/free-disk-space@main
       with:
-        tool-cache: ture
+        tool-cache: true
         android: false
         dotnet: true
         haskell: true
@@ -206,11 +204,9 @@ jobs:
         fi
 
     - name: Setup KernelSU
+      if: env.ENABLE_KERNELSU == 'true'
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-          curl -fsSL -o tools/dtc https://raw.githubusercontent.com/lvjiawei5941883/SM-F926N_Kernel_Builder/main/tools/dtc
-          chmod +x tools/dtc
-          ls -la tools/dtc
           curl -fsSL -o tools/dtc https://raw.githubusercontent.com/lvjiawei5941883/SM-F926N_Kernel_Builder/main/tools/dtc
           chmod +x tools/dtc
           ls -la tools/dtc
@@ -225,7 +221,7 @@ jobs:
         fi 
 
     - name: Patch ReSukiSU manual hooks (all)
-      if: env.KSU_VARIANT == 'resukisu'
+      if: env.ENABLE_KERNELSU == 'true' && env.KSU_VARIANT == 'resukisu'
       run: |
           cd kernel_workspace/android-kernel
           cat > patch_manual_hooks.py << 'EOF'
@@ -318,7 +314,7 @@ jobs:
                 echo "CONFIG_KSU=y" >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
             fi
         fi
-                if [ "${{ env.KSU_VARIANT }}" = "resukisu" ]; then
+                if [ ${{ env.ENABLE_KERNELSU }} = true ] && [ "${{ env.KSU_VARIANT }}" = "resukisu" ]; then
             echo "CONFIG_KSU=y" >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
             echo "CONFIG_KSU_MANUAL_HOOK=y" >> arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }}
         fi
@@ -359,11 +355,11 @@ jobs:
           export KSU_EXPECTED_SIZE=${{ env.KSU_EXPECTED_SIZE }}
           export KSU_EXPECTED_HASH=${{ env.KSU_EXPECTED_HASH }}
         fi
-        make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} ${{ env.KERNEL_CONFIG }}
+        make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} DTC_EXT=$(pwd)/tools/dtc ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} ${{ env.KERNEL_CONFIG }}
         if [ ${{ env.ENABLE_CCACHE }} = true ]; then
-            make -j$(nproc --all) CC="ccache clang" O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} Image dtbs
+            make -j$(nproc --all) CC="ccache clang" O=out ARCH=${{ env.ARCH }} DTC_EXT=$(pwd)/tools/dtc ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} Image dtbs
         else
-            make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} Image dtbs
+            make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} DTC_EXT=$(pwd)/tools/dtc ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} Image dtbs
         fi
         gzip -9 out/arch/arm64/boot/Image
         cat out/arch/arm64/boot/dts/vendor/qcom/lahaina*.dtb > out/arch/arm64/boot/dtb
