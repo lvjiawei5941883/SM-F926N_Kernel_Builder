@@ -1,49 +1,59 @@
 # SM-F926N Kernel Builder
 
-> ⚠️ **警告**：本项目编译产物未经过实机测试，可能无法正常开机或导致设备异常。请谨慎使用，刷机前务必备份重要数据，自行承担风险。
+> **警告**：本项目编译产物未经过实机测试，可能无法正常开机或导致设备异常。请谨慎使用，刷机前务必备份重要数据，自行承担风险。
 
-三星 Galaxy Z Fold 3 (SM-F926N) 内核编译仓库，基于 [lanlinga/KernelSU_Action](https://github.com/lanlinga/KernelSU_Action) 框架。
+三星 Galaxy Z Fold 3 (SM-F926N) 韩国版内核自动编译项目，基于 [KernelSU_Action](https://github.com/lanlinga/KernelSU_Action) 框架，使用 GitHub Actions 云端编译。
 
-## 特性
-
-- 支持 **KSU v0.9.5** 与 **ReSukiSU** 双版本，`config.env` 中 `KSU_VARIANT` 一键切换
-- ReSukiSU 非 GKI 手动 hook 模式，适配 SM-F926N 5.4 内核
-- Clang 14 + GCC 编译，ccache 加速
-- 自动生成 AnyKernel3 刷机包
-
-## 使用
+## 快速开始
 
 1. Fork 本仓库
-2. 上传三星内核源码至 [SM-F926N_Kernel_Source](https://github.com/lvjiawei5941883/SM-F926N_Kernel_Source)（或使用自托管 Release ZIP）
-3. 编辑 `config.env`：
-   - `KSU_VARIANT=ksu` → 编译 KSU v0.9.5
-   - `KSU_VARIANT=resukisu` → 编译 ReSukiSU
-4. 在 Actions 页面手动触发 Build Kernel
+2. 编辑 `config.env`（关键配置见下方）
+3. 进入 Actions 页面 → Build Kernel → Run workflow
+
+## config.env 关键配置
+
+| 变量 | 说明 | 默认值 |
+|---|---|---|
+| `ENABLE_KERNELSU` | 是否编译 KernelSU 内核（`true`/`false`） | `false` |
+| `KSU_VARIANT` | KernelSU 变体：`ksu`（标准版）或 `resukisu`（ReSukiSU 非 GKI 手动 hook） | `resukisu` |
+| `KERNEL_CONFIG` | defconfig 路径 | `vendor/q2q_kor_singlex_defconfig` |
+| `ENABLE_CCACHE` | 是否启用 ccache 加速编译 | `true` |
+| `DISABLE-LTO` | 禁用 LTO（减少编译错误） | `true` |
+
+- `ENABLE_KERNELSU=false` 时编译**纯净内核**，不含任何 KernelSU 代码
+- `ENABLE_KERNELSU=true` + `KSU_VARIANT=resukisu` 时编译 **ReSukiSU 内核**（适配 SM-F926N 5.4 内核的手动 hook 模式）
+- `ENABLE_KERNELSU=true` + `KSU_VARIANT=ksu` 时编译标准 KSU 内核（v0.9.5 非 GKI 版）
+
+全部配置项及默认值见 `config.env` 注释。
+
+## 编译产物
+
+每次成功编译产出两个 artifact：
+
+- `Image.gz-*` — 压缩内核镜像
+- `AnyKernel3-*` — 可直接刷入的刷机包（zip）
 
 ## 刷入
 
 AnyKernel3 zip 通过 TWRP / OrangeFox 或 Kernel Flasher App 刷入。
 
+## 技术栈
+
+- Clang 14 (r450784e, AOSP master-kernel-build-2022)
+- GCC 4.9 (ARM64 + ARM32)
+- DTC 1.4.4 (AOSP) + Samsung DT overlay
+- ccache 2GB 缓存
+- AnyKernel3 自动打包
+
+## 已知问题
+
+1. 编译通过但未实测，刷入后可能无法开机（kernel panic）
+2. defconfig 为韩国版（`kor_singlex`），刷入其他区域设备可能部分硬件不工作
+3. dtb 拼接使用通配符合并所有 lahaina dtb，可能引入不匹配的面板配置
+
 ## 参考
 
 - [KernelSU](https://github.com/tiann/KernelSU)
 - [ReSukiSU](https://github.com/ReSukiSU/ReSukiSU)
-- [lanlinga/KernelSU_Action](https://github.com/lanlinga/KernelSU_Action)
-
-## ⚠️ 重要说明
-
-**此仓库为实验性项目，尚未在真实设备上测试通过。**
-- 内核编译成功，但刷入后可能无法开机（震动发热，kernel panic）
-- 问题可能出在 dtb overlay 不完整、defconfig 不匹配或三星 RKP 保护
-- 目前仍在调试中，请勿用于生产设备
-- 如果你有 SM-F926N 设备并愿意测试，欢迎提供反馈
-
-**已知问题**：
-1. 编译成功但不开机（震动发热）
-2. DTC_EXT 路径问题（三星定制 dtc 缺失）
-3. defconfig 差异（kor_singlex vs eur_openx）
-
-**后续计划**：
-- 对比 Glide Kernel 的 defconfig
-- 修复 dtb overlay
-- 测试 APatch/FolkPatch 替代方案
+- [KernelSU_Action](https://github.com/lanlinga/KernelSU_Action)
+- [三星开源发布中心](https://opensource.samsung.com)
