@@ -349,13 +349,6 @@ jobs:
         key: build-kernel-${{ env.DEVICE }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}
         max-size: 2G
 
-    - name: Setup Glide dtc
-      run: |
-        git clone --depth=1 https://github.com/himekifee/glide-kernel-F926.git /tmp/glide
-        rm -f $GITHUB_WORKSPACE/kernel_workspace/android-kernel/tools/dtc
-        mkdir -p $GITHUB_WORKSPACE/kernel_workspace/android-kernel/tools/dtc/
-        cp -r /tmp/glide/tools/dtc/* $GITHUB_WORKSPACE/kernel_workspace/android-kernel/tools/dtc/
-
     - name: Build kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
